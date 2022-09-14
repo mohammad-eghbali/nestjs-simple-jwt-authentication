@@ -1,17 +1,17 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
-import { PrismaService } from 'src/prisma/prisma.service';
-import * as argon from 'argon2';
-import { AuthDto } from './dto';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, ForbiddenException } from "@nestjs/common";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
+import { PrismaService } from "src/prisma/prisma.service";
+import * as argon from "argon2";
+import { AuthDto } from "./dto";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
-    private config: ConfigService,
+    private config: ConfigService
   ) {}
   async signup(dto: AuthDto) {
     try {
@@ -25,8 +25,8 @@ export class AuthService {
       return this.signToken(user.id, user.email);
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          throw new ForbiddenException('Credentials taken');
+        if (error.code === "P2002") {
+          throw new ForbiddenException("Credentials taken");
         }
       }
       throw error;
@@ -38,25 +38,25 @@ export class AuthService {
         email: dto.email,
       },
     });
-    if (!user) throw new ForbiddenException('Credentials incorrect us');
+    if (!user) throw new ForbiddenException("Credentials incorrect us");
 
     const pwMatches = await argon.verify(user.hash, dto.password);
-    if (!pwMatches) throw new ForbiddenException('Credentials incorrect pw');
+    if (!pwMatches) throw new ForbiddenException("Credentials incorrect pw");
 
     return this.signToken(user.id, user.email);
   }
 
   async signToken(
     userId: number,
-    email: string,
+    email: string
   ): Promise<{ access_token: string }> {
     const payload = {
       sub: userId,
       email,
     };
-    const secret = this.config.get('JWT_SECRET');
+    const secret = this.config.get("JWT_SECRET");
     const token = await this.jwt.signAsync(payload, {
-      expiresIn: '15m',
+      expiresIn: "150m",
       secret,
     });
     return { access_token: token };
